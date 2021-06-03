@@ -1,0 +1,1 @@
+# Gutes-Manhunt-Plugin
