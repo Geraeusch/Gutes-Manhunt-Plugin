@@ -1,7 +1,26 @@
 name: Manhunt
 version: 1.0.0
 api-version: 1.16
-main: de.Der_Mark_.Manhunt.Manhunt
+main: de.Der_Mark_.Manhunt.ManhuntMain
 description: Ein gutes Manhunt-Plugin
 author: Der_Mark_
 authors: [Der_Mark_]
+commands:
+  speedrunner_add:
+    usage: /<command>
+    description: Fügt den angegeben Spieler zum Team der Speedrunner hinzu
+  hunter_add:
+    usage: /<command>
+    description: Fügt den angegeben Spieler zum Team der Hunter hinzu
+  speedrunner_remove:
+    usage: /<command>
+    description: Entfernt den angegeben Spieler aus dem Team der Speedrunner
+  hunter_remove:
+    usage: /<command>
+    description: Entfernt den angegeben Spieler aus dem Team der Hunter
+  gestorbener_speedrunner_add:
+    usage: /<command>
+    description: Markiert einen Speedrunner als gestorben, dadurch kann er nicht mehr als erster ins Ende eintreten
+  gestorbener_speedrunner_remove:
+    usage: /<command>
+    description: Entfernt die Gestorben-Markierung des angegebenen Speedrunners, dadurch kann er wieder als erster ins Ende eintreten
