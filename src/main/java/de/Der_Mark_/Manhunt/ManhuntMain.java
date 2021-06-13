@@ -41,6 +41,7 @@ public class ManhuntMain extends JavaPlugin {
         new GestorbeneSpeedrunnerNichtAlsErstesInsEnde(this);
         new KompassZielWechseln(this);
         new AntiLeitsteinZerstörung(this);
+        new KompassFürRespawnteHunter(this);
 
         ZuweisungsBefehle zuweisungsBefehle = new ZuweisungsBefehle(this);
         this.getCommand("speedrunner_add").setExecutor(zuweisungsBefehle);
