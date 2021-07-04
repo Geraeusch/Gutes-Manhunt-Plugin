@@ -132,19 +132,24 @@ public class ZuweisungsBefehle implements CommandExecutor {
                 }
             } else if (command.getName().equalsIgnoreCase("gestorbener_speedrunner_add")) {
                 if(gefragterSpielerOnline) {
-                    if(ManhuntMain.gestorbeneSpeedrunnerListe.contains(gefragterSpieler.getName())) {
-                        ManhuntMain.gestorbeneSpeedrunnerListe.add(gefragterSpieler.getName());
-                        Bukkit.broadcastMessage(ManhuntMain.GLOBALE_NACHRICHT_NORMAL + gefragterSpieler.getName() +
-                                " ist nun als gestorbener Speedrunner markiert und kann somit nicht als erster das Ende betreten.");
+                    if (ManhuntMain.speedrunnerListe.contains(gefragterSpieler.getName())) {
+                        if (!ManhuntMain.gestorbeneSpeedrunnerListe.contains(gefragterSpieler.getName())) {
+                            ManhuntMain.gestorbeneSpeedrunnerListe.add(gefragterSpieler.getName());
+                            Bukkit.broadcastMessage(ManhuntMain.GLOBALE_NACHRICHT_NORMAL + gefragterSpieler.getName() +
+                                    " ist nun als gestorbener Speedrunner markiert und kann somit nicht als erster das Ende betreten.");
+                        } else {
+                            player.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + gefragterSpieler.getName() + " ist bereits als gestorbener Speedrunner markiert.");
+                        }
                     } else {
-                        player.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + gefragterSpieler.getName() + " ist bereits als gestorbener Speedrunner markiert.");
+                        player.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + args[0] + " ist kein Speedrunner. " +
+                                "Also kann er auch nicht als gestorben markiert werden.");
                     }
                 } else {
                     player.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + gefragterSpieler.getName() + " ist nicht online.");
                 }
 
             } else if (command.getName().equalsIgnoreCase("gestorbener_speedrunner_remove")) {
-                if (ManhuntMain.gestorbeneSpeedrunnerListe.contains(gefragterSpieler.getName())) {
+                if (ManhuntMain.speedrunnerListe.contains(gefragterSpieler.getName())) {
                     if (ManhuntMain.gestorbeneSpeedrunnerListe.contains(gefragterSpieler.getName())) {
                         ManhuntMain.gestorbeneSpeedrunnerListe.remove(gefragterSpieler.getName());
                         Bukkit.broadcastMessage(ManhuntMain.GLOBALE_NACHRICHT_NORMAL + gefragterSpieler.getName() + " gilt nun wieder als noch nicht gestorbener Speedrunner.");
