@@ -1,6 +1,8 @@
 package de.Der_Mark_.Manhunt.Listener;
 
 import de.Der_Mark_.Manhunt.ManhuntMain;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -8,6 +10,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 public class KompassZielWechseln implements Listener {
     ManhuntMain plugin;
@@ -19,6 +22,10 @@ public class KompassZielWechseln implements Listener {
     @EventHandler
     public void onPlayerRechtsklick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        //Code-Abbruch, wenn Hand Offhand ist
+        if(event.getHand() == EquipmentSlot.OFF_HAND) {
+            return;
+        }
         //Code-Abbruch, wenn Spieler kein Hunter ist
         if (!ManhuntMain.hunterListe.contains(player.getName())) {
             return;
