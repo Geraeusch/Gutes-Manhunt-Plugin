@@ -1,10 +1,7 @@
 package de.Der_Mark_.Manhunt;
 
 import de.Der_Mark_.Manhunt.Listener.*;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -18,12 +15,19 @@ import java.util.*;
 
 public class ManhuntMain extends JavaPlugin {
     public static ManhuntMain plugin;
+    ConfigurationManager configManager;
 
     public static ArrayList<String> speedrunnerListe = new ArrayList<>();
     public static ArrayList<String> hunterListe = new ArrayList<>();
     public static ArrayList<String> gestorbeneSpeedrunnerListe = new ArrayList<>();
     public static HashMap<String, String> wessenKompassZeigtAufWenGerade = new HashMap<>();
     public static HashMap<Location, Material> welcherBlockWarBevorLeitsteinHier = new HashMap<>();
+    public static HashMap<String, Location> letztePostitionDesSpeedrunnersInOberwelt = new HashMap<>();
+    public static HashMap<String, Location> letztePostitionDesSpeedrunnersImNether = new HashMap<>();
+    public static HashMap<String, Location> letztePostitionDesSpeedrunnersImEnde = new HashMap<>();
+    public static HashMap<String, Location> zugangsPostitionDesHuntersInOberwelt = new HashMap<>();
+    public static HashMap<String, Location> zugangsPostitionDesHuntersInNether = new HashMap<>();
+    public static HashMap<String, Location> zugangsPostitionDesHuntersInEnde = new HashMap<>();
     public static Boolean siegFürSpeedrunner;
     public static Boolean endeWurdeBetreten = false;
 
@@ -31,10 +35,13 @@ public class ManhuntMain extends JavaPlugin {
     public static String PRIVATE_NACHRICHT_NORMAL =  PLUGIN_PREFIX + ChatColor.GREEN;
     public static String PRIVATE_NACHRICHT_FEHLSCHLAG = PLUGIN_PREFIX + ChatColor.RED;
     public static String GLOBALE_NACHRICHT_NORMAL = PLUGIN_PREFIX + ChatColor.GOLD;
+    public static String GLOBALE_NACHRICHT_FEHLSCHLAG = PLUGIN_PREFIX + ChatColor.DARK_RED;
 
     @Override
     public void onEnable() {
         plugin = this;
+        configManager = new ConfigurationManager(getDataFolder(), "config.yml", this);
+        configManager.load();
 
         new SpeedrunnerTodListener(this);
         new EnderdrachenTodListener(this);
@@ -44,6 +51,7 @@ public class ManhuntMain extends JavaPlugin {
         new KompassFürRespawnteHunter(this);
         new KompassFürNeuGejointeHunter(this);
         new KompassTracktErstenGejointenSpeedrunner(this);
+        new LetztesPortalEinesSpielersSpeichern(this);
 
         ZuweisungsBefehle zuweisungsBefehle = new ZuweisungsBefehle(this);
         this.getCommand("speedrunner_add").setExecutor(zuweisungsBefehle);
@@ -52,6 +60,10 @@ public class ManhuntMain extends JavaPlugin {
         this.getCommand("hunter_remove").setExecutor(zuweisungsBefehle);
         this.getCommand("gestorbener_speedrunner_add").setExecutor(zuweisungsBefehle);
         this.getCommand("gestorbener_speedrunner_remove").setExecutor(zuweisungsBefehle);
+        this.getCommand("switch_kompasszeigtzuportal").setExecutor(zuweisungsBefehle);
+        this.getCommand("change_anzahltotespeedrunnerfürhuntersieg").setExecutor(zuweisungsBefehle);
+
+        parseValues();
 
         ladeEndeBetreten();
 
@@ -77,40 +89,41 @@ public class ManhuntMain extends JavaPlugin {
                                 boolean anvisierterSpeedrunnerOnline = anvisierterSpeedrunner != null;
 
                                 if(anvisierterSpeedrunnerOnline) {
-                                    World world = anvisierterSpeedrunner.getWorld();
-                                    if (world == hunter.getWorld()) {
+                                    World world = hunter.getWorld();
+                                    if (world == anvisierterSpeedrunner.getWorld() || ManhuntMain.KOMPASS_ZEIGT_ZU_PORTAL) {
                                         //Neuen Leitstein setzen:
-                                        Location loc;
-                                        if (world.getEnvironment() != World.Environment.THE_END) {
+                                        Location speedrunnerOderPortalLoc = speedrunnerOderPortalLoc(anvisierterSpeedrunner, hunter);
+                                        Location leitsteinLoc;
+                                        if (!world.getEnvironment().equals(World.Environment.THE_END)) {
                                             int y;
-                                            if (world.getEnvironment() == World.Environment.NORMAL) {
+                                            if (world.getEnvironment().equals(World.Environment.NORMAL)) {
                                                 y = -64;
                                             } else {
                                                 y = 0;
                                             }
-                                            loc = new Location(hunter.getWorld(), anvisierterSpeedrunner.getLocation().getBlock().getX(), y, anvisierterSpeedrunner.getLocation().getBlock().getZ());
-                                            if (loc.getBlock().getType() == Material.BEDROCK) {
-                                                welcherBlockWarBevorLeitsteinHier.put(loc, loc.getBlock().getType());
-                                                loc.getBlock().setType(Material.LODESTONE);
+                                            leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), y, speedrunnerOderPortalLoc.getBlock().getZ());
+                                            if (leitsteinLoc.getBlock().getType() == Material.BEDROCK) {
+                                                welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
+                                                leitsteinLoc.getBlock().setType(Material.LODESTONE);
                                             }
                                         } else {
-                                            if (anvisierterSpeedrunner.getLocation().getY() < 128) {
-                                                loc = new Location(hunter.getWorld(), anvisierterSpeedrunner.getLocation().getBlock().getX(), 255, anvisierterSpeedrunner.getLocation().getBlock().getZ());
-                                                if (loc.getBlock().getType() == Material.AIR) {
-                                                    welcherBlockWarBevorLeitsteinHier.put(loc, loc.getBlock().getType());
-                                                    loc.getBlock().setType(Material.LODESTONE);
+                                            if (speedrunnerOderPortalLoc.getY() < 128) {
+                                                leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), 255, speedrunnerOderPortalLoc.getBlock().getZ());
+                                                if (leitsteinLoc.getBlock().getType() == Material.AIR) {
+                                                    welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
+                                                    leitsteinLoc.getBlock().setType(Material.LODESTONE);
                                                 }
                                             } else {
-                                                loc = new Location(hunter.getWorld(), anvisierterSpeedrunner.getLocation().getBlock().getX(), 0, anvisierterSpeedrunner.getLocation().getBlock().getZ());
-                                                if (loc.getBlock().getType() == Material.AIR ||
-                                                        loc.getBlock().getType() == Material.OBSIDIAN
+                                                leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), 0, speedrunnerOderPortalLoc.getBlock().getZ());
+                                                if (leitsteinLoc.getBlock().getType() == Material.AIR ||
+                                                        leitsteinLoc.getBlock().getType() == Material.OBSIDIAN
                                                 ) {
-                                                    welcherBlockWarBevorLeitsteinHier.put(loc, loc.getBlock().getType());
-                                                    loc.getBlock().setType(Material.LODESTONE);
+                                                    welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
+                                                    leitsteinLoc.getBlock().setType(Material.LODESTONE);
                                                 }
                                             }
                                         }
-                                        meta.setLodestone(loc);
+                                        meta.setLodestone(leitsteinLoc);
                                     } else {
                                         meta.setLodestone(null);
                                     }
@@ -126,6 +139,35 @@ public class ManhuntMain extends JavaPlugin {
                 }
             }
         }.runTaskTimer(plugin,0,10);
+    }
+
+    private static Location speedrunnerOderPortalLoc (Player anvisierterSpeedrunner, Player hunter) {
+        if (anvisierterSpeedrunner.getWorld().equals(hunter.getWorld())) {
+            return anvisierterSpeedrunner.getLocation();
+        }
+        Location portalLoc = null;
+        switch (hunter.getWorld().getEnvironment()) {
+            case NORMAL:
+                portalLoc =  letztePostitionDesSpeedrunnersInOberwelt.get(anvisierterSpeedrunner.getName());
+                break;
+            case NETHER:
+                portalLoc =  letztePostitionDesSpeedrunnersImNether.get(anvisierterSpeedrunner.getName());
+                break;
+            case THE_END:
+                portalLoc =  letztePostitionDesSpeedrunnersImEnde.get(anvisierterSpeedrunner.getName());
+                break;
+        }
+        if (portalLoc != null) {return portalLoc; }
+        switch (hunter.getWorld().getEnvironment()) {
+            case NORMAL: return zugangsPostitionDesHuntersInOberwelt.get(hunter.getName());
+            case NETHER: return zugangsPostitionDesHuntersInNether.get(hunter.getName());
+            case THE_END: return zugangsPostitionDesHuntersInEnde.get(hunter.getName());
+        }
+
+        Bukkit.broadcastMessage(GLOBALE_NACHRICHT_FEHLSCHLAG + "ManhuntMain.speedrunnerOderPortalLoc: Dieser Fall sollte nicht eintreten. " +
+                "hunter.getWorld().getEnvironment(): " + hunter.getWorld().getEnvironment()
+        );
+        return null;
     }
 
     public void AlteLeitsteineEntfernen() {
@@ -159,7 +201,7 @@ public class ManhuntMain extends JavaPlugin {
             hunter.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + "Dein Kompass würde jetzt auf " + speedrunnerName + " zeigen, " +
                     "aber " + speedrunnerName + " ist gerade nicht auf dem Server.");
         } else {
-            if(nunVerfolgterSpeedrunner.getWorld() != hunter.getWorld()) {
+            if(nunVerfolgterSpeedrunner.getWorld() != hunter.getWorld() && !ManhuntMain.KOMPASS_ZEIGT_ZU_PORTAL) {
                 hunter.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + "Dein Kompass würde jetzt auf " + speedrunnerName + " zeigen, " +
                         "aber " + speedrunnerName + " ist in einer anderen Dimension.");
             } else {
@@ -195,6 +237,19 @@ public class ManhuntMain extends JavaPlugin {
             yaml.save(file);
         } catch (IOException e) {
 
+        }
+    }
+
+    public static int ANZAHL_TOTE_SPEEDRUNNER_FÜR_HUNTER_SIEG = 1;
+    public static boolean KOMPASS_ZEIGT_ZU_PORTAL = true;
+
+    public void parseValues() {
+        try {
+            ANZAHL_TOTE_SPEEDRUNNER_FÜR_HUNTER_SIEG = Integer.parseInt(getConfig().getString("anzahlToteSpeedrunnerFürHunterSieg"));
+            KOMPASS_ZEIGT_ZU_PORTAL = Boolean.parseBoolean(getConfig().getString("kompassZeigtZuPortal"));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            Bukkit.getConsoleSender().sendMessage("MESSAGE GHGJFESFES");
         }
     }
 

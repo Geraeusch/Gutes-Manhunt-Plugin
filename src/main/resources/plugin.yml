@@ -24,3 +24,9 @@ commands:
   gestorbener_speedrunner_remove:
     usage: /<command>
     description: Entfernt die Gestorben-Markierung des angegebenen Speedrunners, dadurch kann er wieder als erster ins Ende eintreten
+  switch_kompasszeigtzuportal:
+    usage: /<command>
+    description: Ändert die Einstellung, ob der Kompass zum letzten genutzen Portal eines Speedrunners zeigt, wenn er in einer anderen Dimension ist
+  change_anzahltotespeedrunnerfürhuntersieg:
+    usage: /<command>
+    description: Stelle die Anzahl an Speedrunnern ein, die sterben müssen, damit die Hunter gewonnen haben
