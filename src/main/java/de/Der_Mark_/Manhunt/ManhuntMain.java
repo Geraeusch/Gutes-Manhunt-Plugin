@@ -67,6 +67,10 @@ public class ManhuntMain extends JavaPlugin {
 
         ladeEndeBetreten();
 
+        kompasseAktualisieren();
+    }
+
+    private void kompasseAktualisieren() {
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -77,59 +81,55 @@ public class ManhuntMain extends JavaPlugin {
                     Player hunter = plugin.getServer().getPlayer(hunterName);
                     boolean hunterOnline = hunter != null;
                     if(hunterOnline) {
+                        String anvisierterSpeedrunnerName = wessenKompassZeigtAufWenGerade.get(hunterName);
+                        Player anvisierterSpeedrunner = null;
+                        if(anvisierterSpeedrunnerName != null) {
+                            anvisierterSpeedrunner = plugin.getServer().getPlayer(anvisierterSpeedrunnerName);
+                        }
+                        boolean anvisierterSpeedrunnerOnline = anvisierterSpeedrunner != null;
+
+                        Location leitsteinLoc = null;
+                        if(anvisierterSpeedrunnerOnline) {
+                            World world = hunter.getWorld();
+                            if (world == anvisierterSpeedrunner.getWorld() || ManhuntMain.KOMPASS_ZEIGT_ZU_PORTAL) {
+                                //Neuen Leitstein setzen:
+                                Location speedrunnerOderPortalLoc = speedrunnerOderPortalLoc(anvisierterSpeedrunner, hunter);
+                                if (!world.getEnvironment().equals(World.Environment.THE_END)) {
+                                    int y;
+                                    if (world.getEnvironment().equals(World.Environment.NORMAL)) {
+                                        y = -64;
+                                    } else {
+                                        y = 0;
+                                    }
+                                    leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), y, speedrunnerOderPortalLoc.getBlock().getZ());
+                                    if (leitsteinLoc.getBlock().getType() == Material.BEDROCK) {
+                                        welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
+                                        leitsteinLoc.getBlock().setType(Material.LODESTONE);
+                                    }
+                                } else {
+                                    if (speedrunnerOderPortalLoc.getY() < 128) {
+                                        leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), 255, speedrunnerOderPortalLoc.getBlock().getZ());
+                                        if (leitsteinLoc.getBlock().getType() == Material.AIR) {
+                                            welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
+                                            leitsteinLoc.getBlock().setType(Material.LODESTONE);
+                                        }
+                                    } else {
+                                        leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), 0, speedrunnerOderPortalLoc.getBlock().getZ());
+                                        if (leitsteinLoc.getBlock().getType() == Material.AIR ||
+                                                leitsteinLoc.getBlock().getType() == Material.OBSIDIAN
+                                        ) {
+                                            welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
+                                            leitsteinLoc.getBlock().setType(Material.LODESTONE);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         for (int i = 0; i < 41; i++) {
                             if(hunter.getInventory().getItem(i) != null && hunter.getInventory().getItem(i).getType() == Material.COMPASS) {
                                 ItemStack kompass = hunter.getInventory().getItem(i);
                                 CompassMeta meta = (CompassMeta) kompass.getItemMeta();
-                                String anvisierterSpeedrunnerName = wessenKompassZeigtAufWenGerade.get(hunterName);
-                                Player anvisierterSpeedrunner = null;
-                                if(anvisierterSpeedrunnerName != null) {
-                                    anvisierterSpeedrunner = plugin.getServer().getPlayer(anvisierterSpeedrunnerName);
-                                }
-                                boolean anvisierterSpeedrunnerOnline = anvisierterSpeedrunner != null;
-
-                                if(anvisierterSpeedrunnerOnline) {
-                                    World world = hunter.getWorld();
-                                    if (world == anvisierterSpeedrunner.getWorld() || ManhuntMain.KOMPASS_ZEIGT_ZU_PORTAL) {
-                                        //Neuen Leitstein setzen:
-                                        Location speedrunnerOderPortalLoc = speedrunnerOderPortalLoc(anvisierterSpeedrunner, hunter);
-                                        Location leitsteinLoc;
-                                        if (!world.getEnvironment().equals(World.Environment.THE_END)) {
-                                            int y;
-                                            if (world.getEnvironment().equals(World.Environment.NORMAL)) {
-                                                y = -64;
-                                            } else {
-                                                y = 0;
-                                            }
-                                            leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), y, speedrunnerOderPortalLoc.getBlock().getZ());
-                                            if (leitsteinLoc.getBlock().getType() == Material.BEDROCK) {
-                                                welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
-                                                leitsteinLoc.getBlock().setType(Material.LODESTONE);
-                                            }
-                                        } else {
-                                            if (speedrunnerOderPortalLoc.getY() < 128) {
-                                                leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), 255, speedrunnerOderPortalLoc.getBlock().getZ());
-                                                if (leitsteinLoc.getBlock().getType() == Material.AIR) {
-                                                    welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
-                                                    leitsteinLoc.getBlock().setType(Material.LODESTONE);
-                                                }
-                                            } else {
-                                                leitsteinLoc = new Location(hunter.getWorld(), speedrunnerOderPortalLoc.getBlock().getX(), 0, speedrunnerOderPortalLoc.getBlock().getZ());
-                                                if (leitsteinLoc.getBlock().getType() == Material.AIR ||
-                                                        leitsteinLoc.getBlock().getType() == Material.OBSIDIAN
-                                                ) {
-                                                    welcherBlockWarBevorLeitsteinHier.put(leitsteinLoc, leitsteinLoc.getBlock().getType());
-                                                    leitsteinLoc.getBlock().setType(Material.LODESTONE);
-                                                }
-                                            }
-                                        }
-                                        meta.setLodestone(leitsteinLoc);
-                                    } else {
-                                        meta.setLodestone(null);
-                                    }
-                                } else {
-                                    meta.setLodestone(null);
-                                }
+                                meta.setLodestone(leitsteinLoc);
                                 kompass.setItemMeta(meta);
                                 hunter.getInventory().setItem(i, kompass);
                             }
