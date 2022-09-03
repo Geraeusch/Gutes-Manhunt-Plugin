@@ -64,6 +64,6 @@ public class KompassZielWechseln implements Listener {
         String nunVerfolgterSpeedrunner_Name = ManhuntMain.speedrunnerListe.get(neuerSpeedrunnerIndex);
         ManhuntMain.wessenKompassZeigtAufWenGerade.put(player.getName(), nunVerfolgterSpeedrunner_Name);
         //Nachricht:
-        ManhuntMain.aufWenZeigtKompassNachricht(player, nunVerfolgterSpeedrunner_Name);
+        ManhuntMain.aufWenZeigtKompassNachricht(player.getName(), nunVerfolgterSpeedrunner_Name);
     }
 }

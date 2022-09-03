@@ -42,6 +42,8 @@ public class ManhuntMain extends JavaPlugin {
         new KompassZielWechseln(this);
         new AntiLeitsteinZerstörung(this);
         new KompassFürRespawnteHunter(this);
+        new KompassFürNeuGejointeHunter(this);
+        new KompassTracktErstenGejointenSpeedrunner(this);
 
         ZuweisungsBefehle zuweisungsBefehle = new ZuweisungsBefehle(this);
         this.getCommand("speedrunner_add").setExecutor(zuweisungsBefehle);
@@ -80,7 +82,13 @@ public class ManhuntMain extends JavaPlugin {
                                         //Neuen Leitstein setzen:
                                         Location loc;
                                         if (world.getEnvironment() != World.Environment.THE_END) {
-                                            loc = new Location(hunter.getWorld(), anvisierterSpeedrunner.getLocation().getBlock().getX(), 0, anvisierterSpeedrunner.getLocation().getBlock().getZ());
+                                            int y;
+                                            if (world.getEnvironment() == World.Environment.NORMAL) {
+                                                y = -64;
+                                            } else {
+                                                y = 0;
+                                            }
+                                            loc = new Location(hunter.getWorld(), anvisierterSpeedrunner.getLocation().getBlock().getX(), y, anvisierterSpeedrunner.getLocation().getBlock().getZ());
                                             if (loc.getBlock().getType() == Material.BEDROCK) {
                                                 welcherBlockWarBevorLeitsteinHier.put(loc, loc.getBlock().getType());
                                                 loc.getBlock().setType(Material.LODESTONE);
@@ -143,8 +151,10 @@ public class ManhuntMain extends JavaPlugin {
         return endeWurdeBereitsBetreten;
     }
 
-    public static void aufWenZeigtKompassNachricht(Player hunter, String speedrunnerName) {
-        Player nunVerfolgterSpeedrunner = hunter.getServer().getPlayer(speedrunnerName);
+    public static void aufWenZeigtKompassNachricht(String hunterName, String speedrunnerName) {
+        Player nunVerfolgterSpeedrunner = plugin.getServer().getPlayer(speedrunnerName);
+        Player hunter = plugin.getServer().getPlayer(hunterName);
+        if (hunter == null) {return; }
         if(nunVerfolgterSpeedrunner == null || nunVerfolgterSpeedrunner.isDead()) {
             hunter.sendMessage(ManhuntMain.PRIVATE_NACHRICHT_FEHLSCHLAG + "Dein Kompass würde jetzt auf " + speedrunnerName + " zeigen, " +
                     "aber " + speedrunnerName + " ist gerade nicht auf dem Server.");
